@@ -10,12 +10,15 @@ export default function Trabajadores() {
   const [nuevo, setNuevo] = useState({ nombre: '', email: '', area_id: '', rol: 'trabajador' })
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) navigate('/')
+    })
     cargarTrabajadores()
     cargarAreas()
   }, [])
 
   const cargarTrabajadores = async () => {
-    const { data } = await supabase.from('trabajadores').select('*, areas(nombre, color)')
+    const { data } = await supabase.from('trabajadores').select('*')
     if (data) setTrabajadores(data)
   }
 
@@ -26,10 +29,20 @@ export default function Trabajadores() {
 
   const crearTrabajador = async () => {
     if (!nuevo.nombre || !nuevo.email) return
-    await supabase.from('trabajadores').insert([nuevo])
-    setNuevo({ nombre: '', email: '', area_id: '', rol: 'trabajador' })
-    setMostrarForm(false)
-    cargarTrabajadores()
+    const areaId = nuevo.area_id ? parseInt(nuevo.area_id) : null
+    const { error } = await supabase.from('trabajadores').insert([{
+      nombre: nuevo.nombre,
+      email: nuevo.email,
+      area_id: areaId,
+      rol: nuevo.rol
+    }])
+    if (!error) {
+      setNuevo({ nombre: '', email: '', area_id: '', rol: 'trabajador' })
+      setMostrarForm(false)
+      cargarTrabajadores()
+    } else {
+      console.log('Error al crear:', error)
+    }
   }
 
   const eliminarTrabajador = async (id) => {
@@ -38,6 +51,11 @@ export default function Trabajadores() {
   }
 
   const colores = ['#1a7a4a', '#f97316', '#0d9488', '#65a30d', '#7c3aed', '#db2777']
+
+  const getNombreArea = (area_id) => {
+    const area = areas.find(a => a.id === area_id)
+    return area ? area.nombre : 'Sin área'
+  }
 
   return (
     <div style={{ background: '#f0f7f2', minHeight: '100vh', paddingBottom: '80px', fontFamily: 'sans-serif' }}>
@@ -55,7 +73,7 @@ export default function Trabajadores() {
           <button onClick={() => setMostrarForm(!mostrarForm)} style={{
             background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: '20px',
             padding: '6px 14px', color: '#fff', fontSize: '12px', fontWeight: '700', cursor: 'pointer'
-          }}>+ Nuevo</button>
+          }}>{mostrarForm ? '✕ Cancelar' : '+ Nuevo'}</button>
         </div>
         <div style={{ marginTop: '10px' }}>
           <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700' }}>Trabajadores</p>
@@ -126,7 +144,7 @@ export default function Trabajadores() {
           }}>
             <div style={{
               width: '38px', height: '38px', borderRadius: '50%',
-              background: t.areas?.color || colores[i % colores.length],
+              background: colores[i % colores.length],
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '13px', fontWeight: '700', color: '#fff', flexShrink: 0
             }}>
@@ -134,7 +152,7 @@ export default function Trabajadores() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{t.nombre}</div>
-              <div style={{ fontSize: '11px', color: '#7aaa8e', marginTop: '1px' }}>{t.areas?.nombre || 'Sin área'} · {t.rol}</div>
+              <div style={{ fontSize: '11px', color: '#7aaa8e', marginTop: '1px' }}>{getNombreArea(t.area_id)} · {t.rol}</div>
             </div>
             <button onClick={() => eliminarTrabajador(t.id)} style={{
               background: '#ffe4e4', color: '#e53e3e', border: 'none',
