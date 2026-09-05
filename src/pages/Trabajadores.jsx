@@ -27,7 +27,7 @@ export default function Trabajadores() {
     if (data) setAreas(data)
   }
 
-  const crearTrabajador = async () => {
+const crearTrabajador = async () => {
     if (!nuevo.nombre || !nuevo.email) return
     const areaId = nuevo.area_id ? parseInt(nuevo.area_id) : null
     const { error } = await supabase.from('trabajadores').insert([{
@@ -41,7 +41,7 @@ export default function Trabajadores() {
       setMostrarForm(false)
       cargarTrabajadores()
     } else {
-      console.log('Error al crear:', error)
+      console.log('Error:', error)
     }
   }
 
