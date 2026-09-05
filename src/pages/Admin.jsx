@@ -50,7 +50,7 @@ export default function Admin() {
             <circle cx="28" cy="30" r="14" fill="rgba(255,255,255,0.22)" />
             <circle cx="62" cy="20" r="20" fill="rgba(255,255,255,0.22)" />
             <circle cx="100" cy="27" r="16" fill="rgba(255,255,255,0.22)" />
-            <text x="65" y="42" textAnchor="middle" fontFamily="Nunito,sans-serif" fontSize="22" fontWeight="900" fill="#ffffff" letterSpacing="2">kipo</text>
+            <text x="65" y="42" textAnchor="middle" fontFamily="Nunito,sans-serif" fontSize="22" fontWeight="900" fill="#ffffff" letterSpacing="2">kipu</text>
           </svg>
           <button onClick={handleLogout} style={{
             background: 'rgba(255,255,255,0.25)', border: 'none', borderRadius: '20px',
