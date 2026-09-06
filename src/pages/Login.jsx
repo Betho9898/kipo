@@ -90,6 +90,20 @@ export default function Login() {
           }}>
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+  <span
+    onClick={async () => {
+      if (!email) { alert('Escribe tu correo primero'); return }
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'http://localhost:5173/reset-password'
+      })
+      alert('Te enviamos un correo para recuperar tu contraseña')
+    }}
+    style={{ fontSize: '13px', color: '#f97316', fontWeight: '700', cursor: 'pointer' }}
+  >
+    ¿Olvidaste tu contraseña?
+  </span>
+</div>
         </form>
       </div>
     </div>

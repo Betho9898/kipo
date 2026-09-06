@@ -1,114 +1,259 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../supabase'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [trabajador, setTrabajador] = useState(null)
+  const [novedades, setNovedades] = useState([])
+  const [tiposNovedad, setTiposNovedad] = useState([])
+  const [colillas, setColillas] = useState([])
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [nuevaNovedad, setNuevaNovedad] = useState({ tipo_novedad_id: '', descripcion: '', fecha_inicio: '', fecha_fin: '' })
+
+  useEffect(() => {
+    cargarDatos()
+  }, [])
+
+  const cargarDatos = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { navigate('/'); return }
+
+    const { data: trab } = await supabase
+      .from('trabajadores')
+      .select('*')
+      .eq('email', user.email)
+      .single()
+
+    if (trab) {
+      setTrabajador(trab)
+      const [n, t, c] = await Promise.all([
+        supabase.from('novedades').select('*').eq('trabajador_id', trab.id),
+        supabase.from('tipos_novedad').select('*'),
+        supabase.from('colillas').select('*').eq('trabajador_id', trab.id)
+      ])
+      if (n.data) setNovedades(n.data)
+      if (t.data) setTiposNovedad(t.data)
+      if (c.data) setColillas(c.data)
+    }
+  }
+
+  const solicitarNovedad = async () => {
+    if (!nuevaNovedad.tipo_novedad_id || !trabajador) return
+    await supabase.from('novedades').insert([{
+      trabajador_id: trabajador.id,
+      tipo_novedad_id: parseInt(nuevaNovedad.tipo_novedad_id),
+      descripcion: nuevaNovedad.descripcion,
+      fecha_inicio: nuevaNovedad.fecha_inicio || null,
+      fecha_fin: nuevaNovedad.fecha_fin || null,
+      estado: 'pendiente'
+    }])
+    setNuevaNovedad({ tipo_novedad_id: '', descripcion: '', fecha_inicio: '', fecha_fin: '' })
+    setMostrarForm(false)
+    cargarDatos()
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/')
+  }
+
+  const coloresEstado = {
+    pendiente: { bg: '#fff0e6', color: '#c2500a', label: 'Pendiente' },
+    aprobado: { bg: '#d1f5e0', color: '#1a7a4a', label: 'Aprobado' },
+    rechazado: { bg: '#ffe4e4', color: '#e53e3e', label: 'Rechazado' }
+  }
+
+  const getNombreTipo = (id) => {
+    const t = tiposNovedad.find(t => t.id === id)
+    return t ? t.nombre : 'Novedad'
+  }
+
+ const inputStyle = {
+    width: '100%', padding: '10px', borderRadius: '10px',
+    border: '1.5px solid #4a7a5e', fontSize: '13px', outline: 'none'
+  }
+
+  const labelStyle = {
+    fontSize: '11px', fontWeight: '700', color: '#4a7a5e',
+    display: 'block', marginBottom: '6px'
+  }
 
   return (
     <div style={{ background: '#f0f7f2', minHeight: '100vh', paddingBottom: '80px', fontFamily: 'sans-serif' }}>
-      
+
       {/* TOPBAR */}
       <div style={{
         background: 'linear-gradient(135deg, #1a7a4a 0%, #2eaa6a 60%, #f97316 100%)',
-        padding: '14px 16px 20px',
-        borderRadius: '0 0 28px 28px'
+        padding: '14px 16px 20px', borderRadius: '0 0 28px 28px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <svg viewBox="0 0 130 58" style={{ width: '110px', height: '48px' }} xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="cg2" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 0.3 }} />
-                <stop offset="100%" style={{ stopColor: '#ffffff', stopOpacity: 0.15 }} />
-              </linearGradient>
-            </defs>
             <rect x="8" y="28" width="114" height="26" rx="13" fill="rgba(255,255,255,0.22)" />
             <circle cx="28" cy="30" r="14" fill="rgba(255,255,255,0.22)" />
             <circle cx="62" cy="20" r="20" fill="rgba(255,255,255,0.22)" />
             <circle cx="100" cy="27" r="16" fill="rgba(255,255,255,0.22)" />
             <text x="65" y="42" textAnchor="middle" fontFamily="Nunito,sans-serif" fontSize="22" fontWeight="900" fill="#ffffff" letterSpacing="2">kipu</text>
           </svg>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '50%',
-            background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '12px', fontWeight: '700', color: '#fff'
-          }}>JG</div>
+          <button onClick={handleLogout} style={{
+            background: 'rgba(255,255,255,0.22)', border: 'none', borderRadius: '20px',
+            padding: '6px 14px', color: '#fff', fontSize: '12px', fontWeight: '700', cursor: 'pointer'
+          }}>Salir</button>
         </div>
         <div style={{ marginTop: '10px' }}>
-          <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700' }}>Hola, Juan García 👋</p>
-          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px' }}>Servicio al cliente · Lunes 4 sep 2026</span>
+          <p style={{ color: '#fff', fontSize: '15px', fontWeight: '700' }}>
+            Hola, {trabajador?.nombre || 'Trabajador'} 👋
+          </p>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px' }}>
+            {trabajador?.rol || 'Trabajador'}
+          </span>
         </div>
       </div>
 
       {/* CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px' }}>
-        {[
-          { label: 'Turno hoy', value: '8–5pm', sub: 'Sede norte' },
-          { label: 'Horas mes', value: '142', sub: 'de 160 programadas' },
-          { label: 'Novedades', value: '2', sub: 'pendientes', orange: true },
-          { label: 'Colillas', value: '3', sub: 'disponibles' },
-        ].map((c, i) => (
-          <div key={i} style={{
-            background: '#fff', borderRadius: '14px', padding: '14px',
-            border: '0.5px solid #c8e6d4'
-          }}>
-            <div style={{ fontSize: '10px', color: '#4a7a5e', fontWeight: '700', marginBottom: '5px', textTransform: 'uppercase' }}>{c.label}</div>
-            <div style={{ fontSize: '22px', fontWeight: '700', color: c.orange ? '#f97316' : '#1a4a2e' }}>{c.value}</div>
-            <div style={{ fontSize: '10px', color: '#7aaa8e', marginTop: '2px' }}>{c.sub}</div>
-          </div>
-        ))}
+        <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '0.5px solid #c8e6d4' }}>
+          <div style={{ fontSize: '10px', color: '#4a7a5e', fontWeight: '700', marginBottom: '5px', textTransform: 'uppercase' }}>Novedades</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', color: '#f97316' }}>{novedades.filter(n => n.estado === 'pendiente').length}</div>
+          <div style={{ fontSize: '10px', color: '#7aaa8e', marginTop: '2px' }}>pendientes</div>
+        </div>
+        <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '0.5px solid #c8e6d4' }}>
+          <div style={{ fontSize: '10px', color: '#4a7a5e', fontWeight: '700', marginBottom: '5px', textTransform: 'uppercase' }}>Colillas</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', color: '#1a4a2e' }}>{colillas.length}</div>
+          <div style={{ fontSize: '10px', color: '#7aaa8e', marginTop: '2px' }}>disponibles</div>
+        </div>
       </div>
 
       {/* NOVEDADES */}
       <div style={{ padding: '0 16px' }}>
-        <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '10px' }}>Solicitar novedad</div>
-        {[
-          { title: 'Vacaciones', desc: 'Solicitar días de descanso', color: '#e8f7ef', iconColor: '#1a7a4a' },
-          { title: 'Permiso', desc: 'Permiso por horas o días', color: '#fff0e6', iconColor: '#f97316' },
-          { title: 'Cambio de turno', desc: 'Intercambio con compañero', color: '#e0f7f4', iconColor: '#0d9488' },
-          { title: 'Horas extra', desc: 'Reportar tiempo adicional', color: '#f0f9e8', iconColor: '#65a30d' },
-        ].map((n, i) => (
-          <div key={i} style={{
-            background: '#fff', borderRadius: '12px', padding: '12px 14px',
-            display: 'flex', alignItems: 'center', gap: '12px',
-            marginBottom: '8px', border: '0.5px solid #c8e6d4', cursor: 'pointer'
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase' }}>Mis novedades</div>
+          <div onClick={() => setMostrarForm(!mostrarForm)} style={{ fontSize: '12px', color: '#f97316', fontWeight: '700', cursor: 'pointer' }}>
+            {mostrarForm ? '✕ Cancelar' : '+ Solicitar'}
+          </div>
+        </div>
+
+        {/* FORMULARIO */}
+        {mostrarForm && (
+          <div style={{ background: '#fff', borderRadius: '14px', padding: '16px 20px', marginBottom: '16px', border: '0.5px solid #c8e6d4' }}>
+            
+            {/* Tipo */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={labelStyle}>Tipo de novedad</label>
+              <select
+                value={nuevaNovedad.tipo_novedad_id}
+                onChange={e => setNuevaNovedad({ ...nuevaNovedad, tipo_novedad_id: e.target.value })}
+                style={{ ...inputStyle, background: '#fff' }}
+              >
+                <option value="">Seleccionar tipo</option>
+                {tiposNovedad.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+              </select>
+            </div>
+
+            {/* Fechas */}
+<div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
+  <div style={{ flex: 1 }}>
+    <label style={labelStyle}>Desde</label>
+    <input
+      type="date"
+      value={nuevaNovedad.fecha_inicio}
+      onChange={e => setNuevaNovedad({ ...nuevaNovedad, fecha_inicio: e.target.value })}
+      style={{ width: '90%', padding: '8px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '12px', outline: 'none', background: '#fff' }}
+    />
+  </div>
+  <div style={{ flex: 1 }}>
+    <label style={labelStyle}>Hasta</label>
+    <input
+      type="date"
+      value={nuevaNovedad.fecha_fin}
+      onChange={e => setNuevaNovedad({ ...nuevaNovedad, fecha_fin: e.target.value })}
+      style={{ width: '90%', padding: '8px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '12px', outline: 'none', background: '#fff' }}
+    />
+  </div>
+</div>
+
+            {/* Descripción */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={labelStyle}>Descripción</label>
+              <textarea
+                value={nuevaNovedad.descripcion}
+                onChange={e => setNuevaNovedad({ ...nuevaNovedad, descripcion: e.target.value })}
+                placeholder="Explica tu solicitud..."
+                rows={3}
+                style={{ ...inputStyle, resize: 'none' }}
+              />
+            </div>
+
+            <button onClick={solicitarNovedad} style={{
+              width: '100%', padding: '12px',
+              background: 'linear-gradient(135deg, #1a7a4a, #f97316)',
+              color: '#fff', border: 'none', borderRadius: '10px',
+              fontSize: '13px', fontWeight: '700', cursor: 'pointer'
+            }}>Enviar solicitud</button>
+          </div>
+        )}
+
+        {/* LISTA NOVEDADES */}
+        {novedades.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '30px', color: '#7aaa8e', fontSize: '13px' }}>
+            No tienes novedades — dale a + Solicitar
+          </div>
+        )}
+
+        {novedades.map(n => (
+          <div key={n.id} style={{
+            background: '#fff', borderRadius: '12px', padding: '14px',
+            marginBottom: '8px', border: '0.5px solid #c8e6d4'
           }}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '10px',
-              background: n.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-            }}>
-              <span style={{ fontSize: '20px', color: n.iconColor }}>✦</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{getNombreTipo(n.tipo_novedad_id)}</div>
+              <span style={{
+                fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px',
+                background: coloresEstado[n.estado]?.bg || '#f0f0f0',
+                color: coloresEstado[n.estado]?.color || '#666'
+              }}>{coloresEstado[n.estado]?.label}</span>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{n.title}</div>
-              <div style={{ fontSize: '11px', color: '#7aaa8e', marginTop: '2px' }}>{n.desc}</div>
-            </div>
-            <span style={{ color: '#c8e6d4', fontSize: '18px' }}>›</span>
+            {(n.fecha_inicio || n.fecha_fin) && (
+              <div style={{ fontSize: '11px', color: '#4a7a5e', marginBottom: '4px' }}>
+                📅 {n.fecha_inicio || '?'} → {n.fecha_fin || '?'}
+              </div>
+            )}
+            {n.descripcion && (
+              <div style={{ fontSize: '12px', color: '#4a7a5e', marginBottom: '4px' }}>{n.descripcion}</div>
+            )}
+            {n.comentario && (
+              <div style={{ fontSize: '11px', color: '#7aaa8e', fontStyle: 'italic', marginTop: '6px', padding: '8px', background: '#f0f7f2', borderRadius: '8px' }}>
+                💬 Admin: {n.comentario}
+              </div>
+            )}
           </div>
         ))}
       </div>
 
       {/* COLILLAS */}
-      <div style={{ padding: '16px 16px 0' }}>
-        <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '10px' }}>Colillas de pago</div>
-        {['Agosto 2026', 'Julio 2026'].map((mes, i) => (
-          <div key={i} style={{
-            background: '#fff', borderRadius: '12px', padding: '13px 14px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '8px', border: '0.5px solid #c8e6d4'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e8f7ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#1a7a4a', fontSize: '18px' }}>📄</span>
+      {colillas.length > 0 && (
+        <div style={{ padding: '16px 16px 0' }}>
+          <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', marginBottom: '10px' }}>Colillas de pago</div>
+          {colillas.map(c => (
+            <div key={c.id} style={{
+              background: '#fff', borderRadius: '12px', padding: '13px 14px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: '8px', border: '0.5px solid #c8e6d4'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e8f7ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="ti ti-file-invoice" style={{ fontSize: '18px', color: '#1a7a4a' }} aria-hidden="true" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{c.periodo}</div>
+                  <div style={{ fontSize: '11px', color: '#7aaa8e' }}>Disponible</div>
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{mes}</div>
-                <div style={{ fontSize: '11px', color: '#7aaa8e' }}>Disponible</div>
-              </div>
+              <a href={c.archivo_url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#f97316', fontWeight: '700', textDecoration: 'none' }}>Ver ↗</a>
             </div>
-            <span style={{ fontSize: '12px', color: '#f97316', fontWeight: '700', cursor: 'pointer' }}>Ver ↗</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* BOTTOM NAV */}
       <div style={{
@@ -117,19 +262,18 @@ export default function Dashboard() {
         display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px'
       }}>
         {[
-          { icon: '🏠', label: 'Inicio', active: true },
-          { icon: '📅', label: 'Turnos' },
-          { icon: '📄', label: 'Colillas' },
-          { icon: '🔔', label: 'Novedades' },
-          { icon: '👤', label: 'Perfil' },
+          { icon: 'ti-home', label: 'Inicio', active: true },
+          { icon: 'ti-clipboard-list', label: 'Novedades' },
+          { icon: 'ti-file-text', label: 'Colillas' },
+          { icon: 'ti-bell', label: 'Alertas' },
+          { icon: 'ti-user', label: 'Perfil' },
         ].map((n, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
-            <span style={{ fontSize: '20px' }}>{n.icon}</span>
+            <i className={`ti ${n.icon}`} style={{ fontSize: '22px', color: n.active ? '#1a7a4a' : '#9abcaa' }} aria-hidden="true" />
             <span style={{ fontSize: '10px', color: n.active ? '#1a7a4a' : '#9abcaa', fontWeight: n.active ? '700' : '400' }}>{n.label}</span>
           </div>
         ))}
       </div>
-
     </div>
   )
 }
