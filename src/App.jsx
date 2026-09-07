@@ -8,6 +8,7 @@ import Colillas from './pages/Colillas'
 import Turnos from './pages/Turnos'
 import Reportes from './pages/Reportes'
 import Config from './pages/Config'
+import AreaDetalle from './pages/AreaDetalle'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/turnos" element={<Turnos />} />
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/config" element={<Config />} />
+        <Route path="/area/:id" element={<AreaDetalle />} />
       </Routes>
     </BrowserRouter>
   )

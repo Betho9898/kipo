@@ -104,7 +104,7 @@ export default function Admin() {
           { label: 'Novedades', value: novedades.length, sub: 'por aprobar', orange: true },
           { label: 'Incapacidades', value: '0', sub: 'activas', red: true },
         ].map((c, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '0.5px solid #c8e6d4' }}>
+          <div key={i} style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1px solid #a8d5b8' }}>
             <div style={{ fontSize: '10px', color: '#4a7a5e', fontWeight: '700', marginBottom: '5px', textTransform: 'uppercase' }}>{c.label}</div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: c.orange ? '#f97316' : c.red ? '#e53e3e' : '#1a4a2e' }}>{c.value}</div>
             <div style={{ fontSize: '10px', color: '#7aaa8e', marginTop: '2px' }}>{c.sub}</div>
@@ -124,7 +124,7 @@ export default function Admin() {
           <div key={i} onClick={() => navigate(r.path)} style={{
             background: '#fff', borderRadius: '12px', padding: '12px 14px',
             display: 'flex', alignItems: 'center', gap: '12px',
-            marginBottom: '8px', border: '0.5px solid #c8e6d4', cursor: 'pointer'
+            marginBottom: '8px', border: '1.5px solid #7abf9a', cursor: 'pointer'
           }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: r.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <i className={`ti ${r.icon}`} style={{ fontSize: '19px', color: r.iconColor }} aria-hidden="true" />
@@ -172,10 +172,10 @@ export default function Admin() {
         )}
 
         {areas.map((a, i) => (
-          <div key={a.id} style={{
+          <div key={a.id} onClick={() => navigate(`/area/${a.id}`)} style={{
             background: '#fff', borderRadius: '12px', padding: '12px 14px',
             display: 'flex', alignItems: 'center', gap: '10px',
-            marginBottom: '8px', border: '0.5px solid #c8e6d4'
+            marginBottom: '8px', border: '1.5px solid #7abf9a', cursor: 'pointer'
           }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: a.color || colores[i % colores.length], flexShrink: 0 }} />
             <div style={{ flex: 1, fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{a.nombre}</div>
@@ -234,7 +234,7 @@ export default function Admin() {
                 borderRadius: '10px', padding: '1px 4px'
               }}>{novedades.length}</span>
             )}
-            <i className={`ti ${n.icon}`} style={{ fontSize: '22px', color: i === 0 ? '#1a7a4a' : '#9abcaa' }} aria-hidden="true" />
+            <i className={`ti ${n.icon}`} style={{ fontSize: '22px', color: i === 0 ? '#1a7a4a' : '#4a7a5e' }} aria-hidden="true" />
             <span style={{ fontSize: '10px', color: i === 0 ? '#1a7a4a' : '#9abcaa', fontWeight: i === 0 ? '700' : '400' }}>{n.label}</span>
           </div>
         ))}
