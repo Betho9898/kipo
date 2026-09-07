@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [novedades, setNovedades] = useState([])
   const [tiposNovedad, setTiposNovedad] = useState([])
   const [colillas, setColillas] = useState([])
+  const [turnosSemana, setTurnosSemana] = useState([])
   const [mostrarForm, setMostrarForm] = useState(false)
   const [nuevaNovedad, setNuevaNovedad] = useState({ tipo_novedad_id: '', descripcion: '', fecha_inicio: '', fecha_fin: '' })
 
@@ -35,6 +36,20 @@ export default function Dashboard() {
       if (n.data) setNovedades(n.data)
       if (t.data) setTiposNovedad(t.data)
       if (c.data) setColillas(c.data)
+        // Turnos de la semana actual
+const hoy = new Date()
+const lunes = new Date(hoy)
+lunes.setDate(hoy.getDate() - hoy.getDay() + 1)
+const domingo = new Date(lunes)
+domingo.setDate(lunes.getDate() + 6)
+const { data: turnData } = await supabase
+  .from('turnos')
+  .select('*')
+  .eq('trabajador_id', trab.id)
+  .gte('fecha', lunes.toISOString().split('T')[0])
+  .lte('fecha', domingo.toISOString().split('T')[0])
+  .order('fecha', { ascending: true })
+if (turnData) setTurnosSemana(turnData)
     }
   }
 
@@ -230,7 +245,38 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* COLILLAS */}
+      {/* TURNOS */}
+<div style={{ padding: '0 16px', marginBottom: '16px' }}>
+  <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', marginBottom: '10px' }}>Mis turnos esta semana</div>
+  {turnosSemana.length === 0 ? (
+    <div style={{ textAlign: 'center', padding: '20px', color: '#7aaa8e', fontSize: '13px' }}>
+      No tienes turnos programados esta semana
+    </div>
+  ) : (
+    turnosSemana.map((t, i) => {
+      const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+      const fecha = new Date(t.fecha + 'T00:00:00')
+      const dia = dias[fecha.getDay() === 0 ? 6 : fecha.getDay() - 1]
+      return (
+        <div key={t.id} style={{
+          background: '#fff', borderRadius: '12px', padding: '12px 14px',
+          display: 'flex', alignItems: 'center', gap: '12px',
+          marginBottom: '8px', border: '1.5px solid #7abf9a'
+        }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#e8f7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <i className="ti ti-calendar" style={{ fontSize: '20px', color: '#1a7a4a' }} aria-hidden="true" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{dia} {t.fecha}</div>
+            <div style={{ fontSize: '12px', color: '#4a7a5e', marginTop: '2px' }}>{t.hora_inicio} – {t.hora_fin}</div>
+          </div>
+          <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px', background: '#d1f5e0', color: '#1a7a4a' }}>Programado</span>
+        </div>
+      )
+    })
+  )}
+</div>
+     {/* COLILLAS */}
       {colillas.length > 0 && (
         <div style={{ padding: '16px 16px 0' }}>
           <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', marginBottom: '10px' }}>Colillas de pago</div>
