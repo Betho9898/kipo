@@ -7,6 +7,7 @@ import Novedades from './pages/Novedades'
 import Colillas from './pages/Colillas'
 import Turnos from './pages/Turnos'
 
+
 function App() {
   return (
     <BrowserRouter>
@@ -18,6 +19,7 @@ function App() {
         <Route path="/novedades" element={<Novedades />} />
         <Route path="/colillas" element={<Colillas />} />
         <Route path="/turnos" element={<Turnos />} />
+    
       </Routes>
     </BrowserRouter>
   )
