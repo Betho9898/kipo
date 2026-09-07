@@ -61,8 +61,8 @@ export default function Admin() {
     { icon: 'ti-home', label: 'Inicio', path: '/admin' },
     { icon: 'ti-users', label: 'Equipo', path: '/trabajadores' },
     { icon: 'ti-bell', label: 'Novedades', path: '/novedades' },
-    { icon: 'ti-chart-bar', label: 'Reportes', path: '/admin' },
-    { icon: 'ti-settings', label: 'Config', path: '/admin' },
+    { icon: 'ti-chart-bar', label: 'Reportes', path: '/reportes' },
+    { icon: 'ti-settings', label: 'Config', path: '/config' },
   ]
 
   return (

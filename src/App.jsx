@@ -7,6 +7,7 @@ import Novedades from './pages/Novedades'
 import Colillas from './pages/Colillas'
 import Turnos from './pages/Turnos'
 import Reportes from './pages/Reportes'
+import Config from './pages/Config'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/colillas" element={<Colillas />} />
         <Route path="/turnos" element={<Turnos />} />
         <Route path="/reportes" element={<Reportes />} />
+        <Route path="/config" element={<Config />} />
       </Routes>
     </BrowserRouter>
   )
