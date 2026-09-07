@@ -118,7 +118,7 @@ export default function Admin() {
         {[
           { icon: 'ti-users', label: 'Trabajadores', sub: 'Crear, editar o eliminar', color: '#e8f7ef', iconColor: '#1a7a4a', path: '/trabajadores' },
           { icon: 'ti-clipboard-list', label: 'Novedades', sub: 'Aprobar o rechazar solicitudes', color: '#fff0e6', iconColor: '#f97316', path: '/novedades' },
-          { icon: 'ti-file-invoice', label: 'Colillas de pago', sub: 'Subir para todos los trabajadores', color: '#e0f7f4', iconColor: '#0d9488', path: '/admin' },
+          { icon: 'ti-file-invoice', label: 'Colillas de pago', sub: 'Subir para todos los trabajadores', color: '#e0f7f4', iconColor: '#0d9488', path: '/colillas' },
           { icon: 'ti-calendar', label: 'Horarios y turnos', sub: 'Asignar y gestionar turnos', color: '#f0f9e8', iconColor: '#65a30d', path: '/admin' },
         ].map((r, i) => (
           <div key={i} onClick={() => navigate(r.path)} style={{
