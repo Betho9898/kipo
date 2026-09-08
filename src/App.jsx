@@ -9,6 +9,10 @@ import Turnos from './pages/Turnos'
 import Reportes from './pages/Reportes'
 import Config from './pages/Config'
 import AreaDetalle from './pages/AreaDetalle'
+import NovedadesTrabajador from './pages/NovedadesTrabajador'
+import ColillasTrabajador from './pages/ColillasTrabajador'
+import TurnosTrabajador from './pages/TurnosTrabajador'
+import PerfilTrabajador from './pages/PerfilTrabajador'
 
 function App() {
   return (
@@ -24,6 +28,10 @@ function App() {
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/config" element={<Config />} />
         <Route path="/area/:id" element={<AreaDetalle />} />
+        <Route path="/novedades-trabajador" element={<NovedadesTrabajador />} />
+        <Route path="/colillas-trabajador" element={<ColillasTrabajador />} />
+        <Route path="/turnos-trabajador" element={<TurnosTrabajador />} />
+        <Route path="/perfil-trabajador" element={<PerfilTrabajador />} />
       </Routes>
     </BrowserRouter>
   )

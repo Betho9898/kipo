@@ -302,24 +302,24 @@ if (turnData) setTurnosSemana(turnData)
       )}
 
       {/* BOTTOM NAV */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: '#fff', borderTop: '0.5px solid #c8e6d4',
-        display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px'
-      }}>
-        {[
-          { icon: 'ti-home', label: 'Inicio', active: true },
-          { icon: 'ti-clipboard-list', label: 'Novedades' },
-          { icon: 'ti-file-text', label: 'Colillas' },
-          { icon: 'ti-bell', label: 'Alertas' },
-          { icon: 'ti-user', label: 'Perfil' },
+<div style={{
+  position: 'fixed', bottom: 0, left: 0, right: 0,
+  background: '#fff', borderTop: '1.5px solid #7abf9a',
+  display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px'
+}}>
+  {[
+          { icon: 'ti-home', label: 'Inicio', path: '/dashboard' },
+          { icon: 'ti-clipboard-list', label: 'Novedades', path: '/novedades-trabajador' },
+          { icon: 'ti-file-text', label: 'Colillas', path: '/colillas-trabajador' },
+          { icon: 'ti-calendar', label: 'Turnos', path: '/turnos-trabajador' },
+          { icon: 'ti-user', label: 'Perfil', path: '/perfil-trabajador' },
         ].map((n, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
-            <i className={`ti ${n.icon}`} style={{ fontSize: '22px', color: n.active ? '#1a7a4a' : '#9abcaa' }} aria-hidden="true" />
-            <span style={{ fontSize: '10px', color: n.active ? '#1a7a4a' : '#9abcaa', fontWeight: n.active ? '700' : '400' }}>{n.label}</span>
+          <div key={i} onClick={() => navigate(n.path)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+            <i className={`ti ${n.icon}`} style={{ fontSize: '22px', color: i === 0 ? '#1a7a4a' : '#4a7a5e' }} aria-hidden="true" />
+            <span style={{ fontSize: '10px', color: i === 0 ? '#1a7a4a' : '#4a7a5e', fontWeight: i === 0 ? '700' : '400' }}>{n.label}</span>
           </div>
         ))}
-      </div>
+</div>
     </div>
   )
 }
