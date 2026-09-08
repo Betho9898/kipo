@@ -7,18 +7,36 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [tipoLogin, setTipoLogin] = useState('trabajador')
   const navigate = useNavigate()
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    
+
     if (error) {
       setError('Correo o contraseña incorrectos')
       setLoading(false)
+      return
+    }
+
+    const { data: trab } = await supabase
+      .from('trabajadores')
+      .select('rol')
+      .eq('email', email)
+      .single()
+
+    if (tipoLogin === 'admin') {
+      if (trab?.rol === 'admin') {
+        navigate('/admin')
+      } else {
+        await supabase.auth.signOut()
+        setError('No tienes permisos de administrador')
+        setLoading(false)
+      }
     } else {
       navigate('/dashboard')
     }
@@ -34,7 +52,7 @@ export default function Login() {
         background: '#fff', borderRadius: '24px', padding: '32px 24px',
         width: '100%', maxWidth: '360px'
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <svg viewBox="0 0 130 58" style={{ width: '140px', height: '62px' }} xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -52,6 +70,30 @@ export default function Login() {
           <p style={{ color: '#4a7a5e', fontSize: '14px', marginTop: '8px' }}>Gestión de equipos de trabajo</p>
         </div>
 
+        {/* SELECTOR DE TIPO */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          <button
+            onClick={() => setTipoLogin('trabajador')}
+            style={{
+              flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              background: tipoLogin === 'trabajador' ? 'linear-gradient(135deg, #1a7a4a, #2eaa6a)' : '#f0f7f2',
+              color: tipoLogin === 'trabajador' ? '#fff' : '#4a7a5e',
+              fontSize: '13px', fontWeight: '700'
+            }}>
+            👤 Trabajador
+          </button>
+          <button
+            onClick={() => setTipoLogin('admin')}
+            style={{
+              flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              background: tipoLogin === 'admin' ? 'linear-gradient(135deg, #1a7a4a, #f97316)' : '#f0f7f2',
+              color: tipoLogin === 'admin' ? '#fff' : '#4a7a5e',
+              fontSize: '13px', fontWeight: '700'
+            }}>
+            ⚙️ Admin
+          </button>
+        </div>
+
         {error && (
           <div style={{ background: '#ffe4e4', color: '#e53e3e', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', marginBottom: '16px' }}>
             {error}
@@ -67,7 +109,7 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               placeholder="tu@correo.com"
               required
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '0.5px solid #c8e6d4', fontSize: '14px', outline: 'none' }}
+              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
           <div style={{ marginBottom: '24px' }}>
@@ -78,7 +120,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '0.5px solid #c8e6d4', fontSize: '14px', outline: 'none' }}
+              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
           <button type="submit" disabled={loading} style={{
@@ -90,20 +132,21 @@ export default function Login() {
           }}>
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
+
           <div style={{ textAlign: 'center', marginTop: '16px' }}>
-  <span
-    onClick={async () => {
-      if (!email) { alert('Escribe tu correo primero'); return }
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'http://localhost:5173/reset-password'
-      })
-      alert('Te enviamos un correo para recuperar tu contraseña')
-    }}
-    style={{ fontSize: '13px', color: '#f97316', fontWeight: '700', cursor: 'pointer' }}
-  >
-    ¿Olvidaste tu contraseña?
-  </span>
-</div>
+            <span
+              onClick={async () => {
+                if (!email) { alert('Escribe tu correo primero'); return }
+                await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: 'https://kipo-virid.vercel.app/reset-password'
+                })
+                alert('Te enviamos un correo para recuperar tu contraseña')
+              }}
+              style={{ fontSize: '13px', color: '#f97316', fontWeight: '700', cursor: 'pointer' }}
+            >
+              ¿Olvidaste tu contraseña?
+            </span>
+          </div>
         </form>
       </div>
     </div>
