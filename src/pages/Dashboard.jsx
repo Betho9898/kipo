@@ -20,11 +20,12 @@ export default function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { navigate('/'); return }
 
-    const { data: trab } = await supabase
+    const { data: trabData } = await supabase
       .from('trabajadores')
       .select('*')
       .eq('email', user.email)
-      .single()
+
+    const trab = trabData?.[0]
 
     if (trab) {
       setTrabajador(trab)
@@ -36,20 +37,20 @@ export default function Dashboard() {
       if (n.data) setNovedades(n.data)
       if (t.data) setTiposNovedad(t.data)
       if (c.data) setColillas(c.data)
-        // Turnos de la semana actual
-const hoy = new Date()
-const lunes = new Date(hoy)
-lunes.setDate(hoy.getDate() - hoy.getDay() + 1)
-const domingo = new Date(lunes)
-domingo.setDate(lunes.getDate() + 6)
-const { data: turnData } = await supabase
-  .from('turnos')
-  .select('*')
-  .eq('trabajador_id', trab.id)
-  .gte('fecha', lunes.toISOString().split('T')[0])
-  .lte('fecha', domingo.toISOString().split('T')[0])
-  .order('fecha', { ascending: true })
-if (turnData) setTurnosSemana(turnData)
+
+      const hoy = new Date()
+      const lunes = new Date(hoy)
+      lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1))
+      const domingo = new Date(lunes)
+      domingo.setDate(lunes.getDate() + 6)
+      const { data: turnData } = await supabase
+        .from('turnos')
+        .select('*')
+        .eq('trabajador_id', trab.id)
+        .gte('fecha', lunes.toISOString().split('T')[0])
+        .lte('fecha', domingo.toISOString().split('T')[0])
+        .order('fecha', { ascending: true })
+      if (turnData) setTurnosSemana(turnData)
     }
   }
 
@@ -84,7 +85,7 @@ if (turnData) setTurnosSemana(turnData)
     return t ? t.nombre : 'Novedad'
   }
 
- const inputStyle = {
+  const inputStyle = {
     width: '100%', padding: '10px', borderRadius: '10px',
     border: '1.5px solid #4a7a5e', fontSize: '13px', outline: 'none'
   }
@@ -127,16 +128,48 @@ if (turnData) setTurnosSemana(turnData)
 
       {/* CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px' }}>
-        <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '0.5px solid #c8e6d4' }}>
+        <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1.5px solid #7abf9a' }}>
           <div style={{ fontSize: '10px', color: '#4a7a5e', fontWeight: '700', marginBottom: '5px', textTransform: 'uppercase' }}>Novedades</div>
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#f97316' }}>{novedades.filter(n => n.estado === 'pendiente').length}</div>
           <div style={{ fontSize: '10px', color: '#7aaa8e', marginTop: '2px' }}>pendientes</div>
         </div>
-        <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '0.5px solid #c8e6d4' }}>
+        <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1.5px solid #7abf9a' }}>
           <div style={{ fontSize: '10px', color: '#4a7a5e', fontWeight: '700', marginBottom: '5px', textTransform: 'uppercase' }}>Colillas</div>
           <div style={{ fontSize: '24px', fontWeight: '700', color: '#1a4a2e' }}>{colillas.length}</div>
           <div style={{ fontSize: '10px', color: '#7aaa8e', marginTop: '2px' }}>disponibles</div>
         </div>
+      </div>
+
+      {/* TURNOS */}
+      <div style={{ padding: '0 16px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', marginBottom: '10px' }}>Mis turnos esta semana</div>
+        {turnosSemana.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#7aaa8e', fontSize: '13px' }}>
+            No tienes turnos programados esta semana
+          </div>
+        ) : (
+          turnosSemana.map((t, i) => {
+            const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+            const fecha = new Date(t.fecha + 'T00:00:00')
+            const dia = dias[fecha.getDay() === 0 ? 6 : fecha.getDay() - 1]
+            return (
+              <div key={t.id} style={{
+                background: '#fff', borderRadius: '12px', padding: '12px 14px',
+                display: 'flex', alignItems: 'center', gap: '12px',
+                marginBottom: '8px', border: '1.5px solid #7abf9a'
+              }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#e8f7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className="ti ti-calendar" style={{ fontSize: '20px', color: '#1a7a4a' }} aria-hidden="true" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{dia} {t.fecha}</div>
+                  <div style={{ fontSize: '12px', color: '#4a7a5e', marginTop: '2px' }}>{t.hora_inicio} – {t.hora_fin}</div>
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px', background: '#d1f5e0', color: '#1a7a4a' }}>Programado</span>
+              </div>
+            )
+          })
+        )}
       </div>
 
       {/* NOVEDADES */}
@@ -148,67 +181,39 @@ if (turnData) setTurnosSemana(turnData)
           </div>
         </div>
 
-        {/* FORMULARIO */}
         {mostrarForm && (
-          <div style={{ background: '#fff', borderRadius: '14px', padding: '16px 20px', marginBottom: '16px', border: '0.5px solid #c8e6d4' }}>
-            
-            {/* Tipo */}
+          <div style={{ background: '#fff', borderRadius: '14px', padding: '16px 20px', marginBottom: '16px', border: '1.5px solid #7abf9a' }}>
             <div style={{ marginBottom: '14px' }}>
               <label style={labelStyle}>Tipo de novedad</label>
-              <select
-                value={nuevaNovedad.tipo_novedad_id}
-                onChange={e => setNuevaNovedad({ ...nuevaNovedad, tipo_novedad_id: e.target.value })}
-                style={{ ...inputStyle, background: '#fff' }}
-              >
+              <select value={nuevaNovedad.tipo_novedad_id} onChange={e => setNuevaNovedad({ ...nuevaNovedad, tipo_novedad_id: e.target.value })} style={{ ...inputStyle, background: '#fff' }}>
                 <option value="">Seleccionar tipo</option>
                 {tiposNovedad.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
               </select>
             </div>
-
-            {/* Fechas */}
-<div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
-  <div style={{ flex: 1 }}>
-    <label style={labelStyle}>Desde</label>
-    <input
-      type="date"
-      value={nuevaNovedad.fecha_inicio}
-      onChange={e => setNuevaNovedad({ ...nuevaNovedad, fecha_inicio: e.target.value })}
-      style={{ width: '90%', padding: '8px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '12px', outline: 'none', background: '#fff' }}
-    />
-  </div>
-  <div style={{ flex: 1 }}>
-    <label style={labelStyle}>Hasta</label>
-    <input
-      type="date"
-      value={nuevaNovedad.fecha_fin}
-      onChange={e => setNuevaNovedad({ ...nuevaNovedad, fecha_fin: e.target.value })}
-      style={{ width: '90%', padding: '8px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '12px', outline: 'none', background: '#fff' }}
-    />
-  </div>
-</div>
-
-            {/* Descripción */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Desde</label>
+                <input type="date" value={nuevaNovedad.fecha_inicio} onChange={e => setNuevaNovedad({ ...nuevaNovedad, fecha_inicio: e.target.value })}
+                  style={{ width: '90%', padding: '8px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '12px', outline: 'none', background: '#fff' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Hasta</label>
+                <input type="date" value={nuevaNovedad.fecha_fin} onChange={e => setNuevaNovedad({ ...nuevaNovedad, fecha_fin: e.target.value })}
+                  style={{ width: '90%', padding: '8px', borderRadius: '10px', border: '1.5px solid #4a7a5e', fontSize: '12px', outline: 'none', background: '#fff' }} />
+              </div>
+            </div>
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>Descripción</label>
-              <textarea
-                value={nuevaNovedad.descripcion}
-                onChange={e => setNuevaNovedad({ ...nuevaNovedad, descripcion: e.target.value })}
-                placeholder="Explica tu solicitud..."
-                rows={3}
-                style={{ ...inputStyle, resize: 'none' }}
-              />
+              <textarea value={nuevaNovedad.descripcion} onChange={e => setNuevaNovedad({ ...nuevaNovedad, descripcion: e.target.value })}
+                placeholder="Explica tu solicitud..." rows={3} style={{ ...inputStyle, resize: 'none' }} />
             </div>
-
             <button onClick={solicitarNovedad} style={{
-              width: '100%', padding: '12px',
-              background: 'linear-gradient(135deg, #1a7a4a, #f97316)',
-              color: '#fff', border: 'none', borderRadius: '10px',
-              fontSize: '13px', fontWeight: '700', cursor: 'pointer'
+              width: '100%', padding: '12px', background: 'linear-gradient(135deg, #1a7a4a, #f97316)',
+              color: '#fff', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer'
             }}>Enviar solicitud</button>
           </div>
         )}
 
-        {/* LISTA NOVEDADES */}
         {novedades.length === 0 && (
           <div style={{ textAlign: 'center', padding: '30px', color: '#7aaa8e', fontSize: '13px' }}>
             No tienes novedades — dale a + Solicitar
@@ -216,26 +221,17 @@ if (turnData) setTurnosSemana(turnData)
         )}
 
         {novedades.map(n => (
-          <div key={n.id} style={{
-            background: '#fff', borderRadius: '12px', padding: '14px',
-            marginBottom: '8px', border: '0.5px solid #c8e6d4'
-          }}>
+          <div key={n.id} style={{ background: '#fff', borderRadius: '12px', padding: '14px', marginBottom: '8px', border: '1.5px solid #7abf9a' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{getNombreTipo(n.tipo_novedad_id)}</div>
-              <span style={{
-                fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px',
-                background: coloresEstado[n.estado]?.bg || '#f0f0f0',
-                color: coloresEstado[n.estado]?.color || '#666'
-              }}>{coloresEstado[n.estado]?.label}</span>
+              <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px', background: coloresEstado[n.estado]?.bg || '#f0f0f0', color: coloresEstado[n.estado]?.color || '#666' }}>
+                {coloresEstado[n.estado]?.label}
+              </span>
             </div>
             {(n.fecha_inicio || n.fecha_fin) && (
-              <div style={{ fontSize: '11px', color: '#4a7a5e', marginBottom: '4px' }}>
-                📅 {n.fecha_inicio || '?'} → {n.fecha_fin || '?'}
-              </div>
+              <div style={{ fontSize: '11px', color: '#4a7a5e', marginBottom: '4px' }}>📅 {n.fecha_inicio || '?'} → {n.fecha_fin || '?'}</div>
             )}
-            {n.descripcion && (
-              <div style={{ fontSize: '12px', color: '#4a7a5e', marginBottom: '4px' }}>{n.descripcion}</div>
-            )}
+            {n.descripcion && <div style={{ fontSize: '12px', color: '#4a7a5e', marginBottom: '4px' }}>{n.descripcion}</div>}
             {n.comentario && (
               <div style={{ fontSize: '11px', color: '#7aaa8e', fontStyle: 'italic', marginTop: '6px', padding: '8px', background: '#f0f7f2', borderRadius: '8px' }}>
                 💬 Admin: {n.comentario}
@@ -245,47 +241,12 @@ if (turnData) setTurnosSemana(turnData)
         ))}
       </div>
 
-      {/* TURNOS */}
-<div style={{ padding: '0 16px', marginBottom: '16px' }}>
-  <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', marginBottom: '10px' }}>Mis turnos esta semana</div>
-  {turnosSemana.length === 0 ? (
-    <div style={{ textAlign: 'center', padding: '20px', color: '#7aaa8e', fontSize: '13px' }}>
-      No tienes turnos programados esta semana
-    </div>
-  ) : (
-    turnosSemana.map((t, i) => {
-      const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-      const fecha = new Date(t.fecha + 'T00:00:00')
-      const dia = dias[fecha.getDay() === 0 ? 6 : fecha.getDay() - 1]
-      return (
-        <div key={t.id} style={{
-          background: '#fff', borderRadius: '12px', padding: '12px 14px',
-          display: 'flex', alignItems: 'center', gap: '12px',
-          marginBottom: '8px', border: '1.5px solid #7abf9a'
-        }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#e8f7ef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <i className="ti ti-calendar" style={{ fontSize: '20px', color: '#1a7a4a' }} aria-hidden="true" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a4a2e' }}>{dia} {t.fecha}</div>
-            <div style={{ fontSize: '12px', color: '#4a7a5e', marginTop: '2px' }}>{t.hora_inicio} – {t.hora_fin}</div>
-          </div>
-          <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px', background: '#d1f5e0', color: '#1a7a4a' }}>Programado</span>
-        </div>
-      )
-    })
-  )}
-</div>
-     {/* COLILLAS */}
+      {/* COLILLAS */}
       {colillas.length > 0 && (
         <div style={{ padding: '16px 16px 0' }}>
           <div style={{ fontSize: '11px', fontWeight: '700', color: '#4a7a5e', textTransform: 'uppercase', marginBottom: '10px' }}>Colillas de pago</div>
           {colillas.map(c => (
-            <div key={c.id} style={{
-              background: '#fff', borderRadius: '12px', padding: '13px 14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: '8px', border: '0.5px solid #c8e6d4'
-            }}>
+            <div key={c.id} style={{ background: '#fff', borderRadius: '12px', padding: '13px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', border: '1.5px solid #7abf9a' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e8f7ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <i className="ti ti-file-invoice" style={{ fontSize: '18px', color: '#1a7a4a' }} aria-hidden="true" />
@@ -302,12 +263,8 @@ if (turnData) setTurnosSemana(turnData)
       )}
 
       {/* BOTTOM NAV */}
-<div style={{
-  position: 'fixed', bottom: 0, left: 0, right: 0,
-  background: '#fff', borderTop: '1.5px solid #7abf9a',
-  display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px'
-}}>
-  {[
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1.5px solid #7abf9a', display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px' }}>
+        {[
           { icon: 'ti-home', label: 'Inicio', path: '/dashboard' },
           { icon: 'ti-clipboard-list', label: 'Novedades', path: '/novedades-trabajador' },
           { icon: 'ti-file-text', label: 'Colillas', path: '/colillas-trabajador' },
@@ -319,7 +276,7 @@ if (turnData) setTurnosSemana(turnData)
             <span style={{ fontSize: '10px', color: i === 0 ? '#1a7a4a' : '#4a7a5e', fontWeight: i === 0 ? '700' : '400' }}>{n.label}</span>
           </div>
         ))}
-</div>
+      </div>
     </div>
   )
 }
