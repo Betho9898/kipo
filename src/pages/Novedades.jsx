@@ -164,7 +164,7 @@ export default function Novedades() {
                 No hay solicitudes de cambio de turno
               </div>
             )}
-            {cambiosTurno.map(c => {
+            {cambiosTurno.filter(c => c.estado !== 'pendiente').map(c => {
               const turnoSol = getTurno(c.turno_solicitante_id)
               const turnoRec = getTurno(c.turno_receptor_id)
               return (
